@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { getMatches } from "@/lib/sheets";
 import { Match } from "@/lib/types";
 import { format } from "date-fns";

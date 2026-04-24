@@ -1,3 +1,5 @@
+export const dynamic = "force-dynamic";
+
 import { getMembers } from "@/lib/sheets";
 import { Member } from "@/lib/types";
 import AddMemberForm from "./AddMemberForm";
