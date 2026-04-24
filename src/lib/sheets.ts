@@ -26,7 +26,9 @@ export async function getMembers(): Promise<Member[]> {
     range: "members!A2:B",
   });
   const rows = res.data.values ?? [];
-  return rows.map((row) => ({ id: row[0], name: row[1] }));
+  return rows
+    .filter((row) => row[0])
+    .map((row) => ({ id: row[0], name: row[1] }));
 }
 
 export async function addMember(name: string): Promise<Member> {
