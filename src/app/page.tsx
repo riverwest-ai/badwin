@@ -46,6 +46,31 @@ function calcPartnerStats(matches: Match[]) {
     .sort((a, b) => b.winRate - a.winRate);
 }
 
+function calcOpponentStats(matches: Match[]) {
+  const oppMap: Record<string, { wins: number; total: number }> = {};
+  for (const m of matches) {
+    const inTeam1 = m.team1.includes(MY_NAME);
+    const inTeam2 = m.team2.includes(MY_NAME);
+    if (!inTeam1 && !inTeam2) continue;
+
+    const opponents = inTeam1 ? m.team2 : m.team1;
+    const key = opponents.join(" & ");
+    const won = inTeam1 ? m.score1 > m.score2 : m.score2 > m.score1;
+
+    if (!oppMap[key]) oppMap[key] = { wins: 0, total: 0 };
+    oppMap[key].total++;
+    if (won) oppMap[key].wins++;
+  }
+  return Object.entries(oppMap)
+    .map(([name, s]) => ({
+      name,
+      wins: s.wins,
+      total: s.total,
+      winRate: Math.round((s.wins / s.total) * 100),
+    }))
+    .sort((a, b) => b.winRate - a.winRate);
+}
+
 function MatchCard({ match }: { match: Match }) {
   const inTeam1 = match.team1.includes(MY_NAME);
   const myTeam = inTeam1 ? match.team1 : match.team2;
@@ -100,6 +125,7 @@ export default async function HomePage() {
   );
   const stats = calcStats(matches);
   const partnerStats = calcPartnerStats(matches);
+  const opponentStats = calcOpponentStats(matches);
   const recent = sorted.slice(0, 5);
 
   return (
@@ -175,6 +201,40 @@ export default async function HomePage() {
                     }`}
                   >
                     {p.winRate}%
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 対戦相手別勝率 */}
+      {opponentStats.length > 0 && (
+        <div>
+          <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">
+            対戦相手別
+          </h2>
+          <div className="space-y-2">
+            {opponentStats.map((o) => (
+              <div
+                key={o.name}
+                className="bg-gray-900 rounded-xl px-4 py-3 border border-gray-800 flex items-center justify-between"
+              >
+                <div>
+                  <span className="font-semibold text-white text-sm">vs {o.name}</span>
+                  <span className="text-gray-500 text-xs ml-2">{o.total}試合</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500">
+                    {o.wins}勝{o.total - o.wins}敗
+                  </span>
+                  <span
+                    className={`font-bold text-sm ${
+                      o.winRate >= 50 ? "text-green-400" : "text-red-400"
+                    }`}
+                  >
+                    {o.winRate}%
                   </span>
                 </div>
               </div>
