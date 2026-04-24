@@ -34,6 +34,13 @@ export default function RootLayout({
               <span>🏸</span>
               <span>BadWin</span>
             </Link>
+            {/* モバイル: メンバーリンクのみ表示 */}
+            <Link
+              href="/members"
+              className="md:hidden px-3 py-1.5 rounded-lg text-sm text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
+            >
+              メンバー
+            </Link>
             {/* PCナビ */}
             <nav className="hidden md:flex items-center gap-1">
               <Link href="/" className="px-3 py-1.5 rounded-lg text-sm text-gray-300 hover:text-white hover:bg-gray-800 transition-colors">
