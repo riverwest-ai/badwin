@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Member } from "@/lib/types";
@@ -7,7 +8,15 @@ import { format } from "date-fns";
 
 const MY_NAME = "ぎんじ";
 
-export default function NewMatchPage() {
+export default function NewMatchPageWrapper() {
+  return (
+    <Suspense>
+      <NewMatchPage />
+    </Suspense>
+  );
+}
+
+function NewMatchPage() {
   const router = useRouter();
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(false);

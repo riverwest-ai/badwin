@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { revalidateTag } from "next/cache";
 import { addMember, deleteMember, getMembers } from "@/lib/sheets";
 
 export async function GET() {
@@ -18,6 +19,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Name is required" }, { status: 400 });
     }
     const member = await addMember(name.trim());
+    revalidateTag("members", "max");
     return NextResponse.json(member, { status: 201 });
   } catch (e) {
     console.error(e);
@@ -29,6 +31,7 @@ export async function DELETE(req: Request) {
   try {
     const { id } = await req.json();
     await deleteMember(id);
+    revalidateTag("members", "max");
     return NextResponse.json({ success: true });
   } catch (e) {
     console.error(e);

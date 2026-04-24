@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist } from "next/font/google";
+import { Suspense } from "react";
 import Link from "next/link";
 import LiffProvider from "@/components/LiffProvider";
 import BottomNav from "@/components/BottomNav";
@@ -68,13 +69,15 @@ export default function RootLayout({
           </div>
         </header>
 
-        <LiffProvider>
-          {/* モバイルはボトムナビ分の余白を追加 */}
-          <main className="max-w-2xl mx-auto px-4 py-6 pb-24 md:pb-6">
-            {children}
-          </main>
-          <BottomNav />
-        </LiffProvider>
+        <Suspense>
+          <LiffProvider>
+            {/* モバイルはボトムナビ分の余白を追加 */}
+            <main className="max-w-2xl mx-auto px-4 py-6 pb-24 md:pb-6">
+              {children}
+            </main>
+            <BottomNav />
+          </LiffProvider>
+        </Suspense>
       </body>
     </html>
   );

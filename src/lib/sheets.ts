@@ -1,4 +1,5 @@
 import { google } from "googleapis";
+import { cacheLife, cacheTag } from "next/cache";
 import { Match, Member } from "./types";
 
 const SCOPES = ["https://www.googleapis.com/auth/spreadsheets"];
@@ -20,6 +21,10 @@ async function getSheets() {
 // --- Members ---
 
 export async function getMembers(): Promise<Member[]> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag("members");
+
   const sheets = await getSheets();
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
@@ -53,7 +58,6 @@ export async function deleteMember(id: string): Promise<void> {
   const rowIndex = rows.findIndex((row) => row[0] === id);
   if (rowIndex === -1) return;
 
-  // Clear the row (Google Sheets API doesn't support row deletion directly via values API)
   await sheets.spreadsheets.values.clear({
     spreadsheetId: SPREADSHEET_ID,
     range: `members!A${rowIndex + 1}:B${rowIndex + 1}`,
@@ -63,6 +67,10 @@ export async function deleteMember(id: string): Promise<void> {
 // --- Matches ---
 
 export async function getMatches(): Promise<Match[]> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag("matches");
+
   const sheets = await getSheets();
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
@@ -130,6 +138,10 @@ export async function deleteMatch(id: string): Promise<void> {
 // --- LINE Users ---
 
 export async function getLineUser(lineUserId: string): Promise<{ memberName: string } | null> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag("line-users");
+
   const sheets = await getSheets();
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
