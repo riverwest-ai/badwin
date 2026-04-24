@@ -71,7 +71,7 @@ export default function BottomNav() {
                 <div className="w-14 h-14 rounded-full bg-green-500 hover:bg-green-400 flex items-center justify-center shadow-lg shadow-green-900/50 transition-colors text-black">
                   <Icon active={false} />
                 </div>
-                <span className="text-xs text-gray-500 mt-1">{item.label}</span>
+                <span className="text-xs text-gray-500 mt-1 whitespace-nowrap">{item.label}</span>
               </Link>
             );
           }
@@ -85,7 +85,7 @@ export default function BottomNav() {
               }`}
             >
               <Icon active={active} />
-              <span className="text-xs">{item.label}</span>
+              <span className="text-xs whitespace-nowrap">{item.label}</span>
             </Link>
           );
         })}
