@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist } from "next/font/google";
 import Link from "next/link";
+import LiffProvider from "@/components/LiffProvider";
 import "./globals.css";
 
 const geist = Geist({ subsets: ["latin"] });
@@ -56,6 +57,12 @@ export default function RootLayout({
                 メンバー
               </Link>
               <Link
+                href="/profile"
+                className="px-3 py-1.5 rounded-lg text-sm text-gray-300 hover:text-white hover:bg-gray-800 transition-colors"
+              >
+                👤
+              </Link>
+              <Link
                 href="/matches/new"
                 className="ml-2 px-3 py-1.5 rounded-lg text-sm bg-green-500 hover:bg-green-400 text-black font-semibold transition-colors"
               >
@@ -64,7 +71,9 @@ export default function RootLayout({
             </nav>
           </div>
         </header>
-        <main className="max-w-2xl mx-auto px-4 py-6">{children}</main>
+        <LiffProvider>
+          <main className="max-w-2xl mx-auto px-4 py-6">{children}</main>
+        </LiffProvider>
       </body>
     </html>
   );

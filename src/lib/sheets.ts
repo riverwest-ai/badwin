@@ -126,3 +126,47 @@ export async function deleteMatch(id: string): Promise<void> {
     range: `matches!A${rowIndex + 1}:I${rowIndex + 1}`,
   });
 }
+
+// --- LINE Users ---
+
+export async function getLineUser(lineUserId: string): Promise<{ memberName: string } | null> {
+  const sheets = await getSheets();
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: SPREADSHEET_ID,
+    range: "line_users!A2:C",
+  });
+  const rows = res.data.values ?? [];
+  const row = rows.find((r) => r[0] === lineUserId);
+  if (!row) return null;
+  return { memberName: row[1] };
+}
+
+export async function upsertLineUser(
+  lineUserId: string,
+  memberName: string,
+  displayName: string
+): Promise<void> {
+  const sheets = await getSheets();
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: SPREADSHEET_ID,
+    range: "line_users!A:C",
+  });
+  const rows = res.data.values ?? [];
+  const rowIndex = rows.findIndex((r) => r[0] === lineUserId);
+
+  if (rowIndex === -1) {
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: SPREADSHEET_ID,
+      range: "line_users!A:C",
+      valueInputOption: "RAW",
+      requestBody: { values: [[lineUserId, memberName, displayName]] },
+    });
+  } else {
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `line_users!A${rowIndex + 1}:C${rowIndex + 1}`,
+      valueInputOption: "RAW",
+      requestBody: { values: [[lineUserId, memberName, displayName]] },
+    });
+  }
+}
