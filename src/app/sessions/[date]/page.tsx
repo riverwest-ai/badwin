@@ -7,6 +7,7 @@ import { ja } from "date-fns/locale";
 import Link from "next/link";
 import { ListSkeleton } from "@/components/Skeleton";
 
+
 const MY_NAME = "ぎんじ";
 
 function calcPlayerStats(matches: Match[]) {
@@ -96,13 +97,22 @@ async function SessionDetail({ date }: { date: string }) {
           const myWon = (inTeam1 && team1Won) || (inTeam2 && !team1Won);
           return (
             <div key={m.id} className="bg-gray-900 rounded-xl p-4 border border-gray-800">
-              <div className="text-xs text-gray-600 mb-2 flex items-center gap-2">
-                <span>第{i + 1}試合</span>
-                {(inTeam1 || inTeam2) && (
-                  <span className={`px-1.5 py-0.5 rounded text-xs font-semibold ${myWon ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}`}>
-                    {myWon ? "勝" : "負"}
-                  </span>
-                )}
+              <div className="text-xs text-gray-600 mb-2 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span>第{i + 1}試合</span>
+                  {(inTeam1 || inTeam2) && (
+                    <span className={`px-1.5 py-0.5 rounded text-xs font-semibold ${myWon ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"}`}>
+                      {myWon ? "勝" : "負"}
+                    </span>
+                  )}
+                </div>
+                <Link
+                  href={`/matches/${m.id}/edit`}
+                  className="text-gray-600 hover:text-gray-400 transition-colors"
+                  title="編集"
+                >
+                  ✏️
+                </Link>
               </div>
               <div className="flex items-center gap-3">
                 <div className={`flex-1 text-sm font-semibold ${team1Won && inTeam1 ? "text-green-400" : !team1Won && inTeam2 ? "text-green-400" : (inTeam1 || inTeam2) ? "text-red-400" : "text-white"}`}>

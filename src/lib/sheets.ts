@@ -119,6 +119,36 @@ export async function addMatch(
   return { ...match, id, createdAt };
 }
 
+export async function updateMatch(
+  match: Pick<Match, "id" | "date" | "team1" | "team2" | "score1" | "score2">
+): Promise<void> {
+  const sheets = await getSheets();
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: SPREADSHEET_ID,
+    range: "matches!A:I",
+  });
+  const rows = res.data.values ?? [];
+  const rowIndex = rows.findIndex((row) => row[0] === match.id);
+  if (rowIndex === -1) throw new Error("Match not found");
+
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: SPREADSHEET_ID,
+    range: `matches!B${rowIndex + 1}:H${rowIndex + 1}`,
+    valueInputOption: "RAW",
+    requestBody: {
+      values: [[
+        match.date,
+        match.team1[0] ?? "",
+        match.team1[1] ?? "",
+        match.team2[0] ?? "",
+        match.team2[1] ?? "",
+        match.score1,
+        match.score2,
+      ]],
+    },
+  });
+}
+
 export async function deleteMatch(id: string): Promise<void> {
   const sheets = await getSheets();
   const res = await sheets.spreadsheets.values.get({

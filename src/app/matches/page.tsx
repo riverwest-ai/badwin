@@ -42,7 +42,16 @@ function MatchRow({ match }: { match: Match }) {
             </div>
           </div>
         </div>
-        <DeleteMatchButton matchId={match.id} />
+        <div className="flex items-center gap-1 ml-2 shrink-0">
+          <Link
+            href={`/matches/${match.id}/edit`}
+            className="p-2 rounded-lg text-gray-500 hover:text-gray-300 hover:bg-gray-800 transition-colors"
+            title="編集"
+          >
+            ✏️
+          </Link>
+          <DeleteMatchButton matchId={match.id} />
+        </div>
       </div>
     </div>
   );
