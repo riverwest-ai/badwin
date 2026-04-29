@@ -17,7 +17,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { date, team1, team2, score1, score2 } = body;
 
-    if (!date || !team1?.[0] || !team1?.[1] || !team2?.[0] || !team2?.[1]) {
+    if (!date || !team1?.[0]) {
       return NextResponse.json({ error: "Invalid match data" }, { status: 400 });
     }
     if (score1 == null || score2 == null) {

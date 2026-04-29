@@ -41,11 +41,8 @@ function NewMatchPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!team1p2 || !team2p1 || !team2p2) {
-      setError("全員選択してください");
-      return;
-    }
-    if (team1p2 === team2p1 || team1p2 === team2p2 || team2p1 === team2p2) {
+    const selected = [team1p2, team2p1, team2p2].filter(Boolean);
+    if (new Set(selected).size !== selected.length) {
       setError("同じプレイヤーを重複して選択できません");
       return;
     }
@@ -53,6 +50,9 @@ function NewMatchPage() {
       setError("スコアを入力してください");
       return;
     }
+
+    const team1 = [MY_NAME, ...(team1p2 ? [team1p2] : [])];
+    const team2 = [...(team2p1 ? [team2p1] : []), ...(team2p2 ? [team2p2] : [])];
 
     setLoading(true);
     setError("");
@@ -62,8 +62,8 @@ function NewMatchPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           date,
-          team1: [MY_NAME, team1p2],
-          team2: [team2p1, team2p2],
+          team1,
+          team2,
           score1: Number(score1),
           score2: Number(score2),
         }),
@@ -139,7 +139,7 @@ function NewMatchPage() {
           <div className="flex gap-3">
             <SelectField label="プレイヤー1（あなた）" value={MY_NAME} onChange={() => {}} disabled exclude={[]} />
             <SelectField
-              label="パートナー"
+              label="パートナー（任意）"
               value={team1p2}
               onChange={setTeam1p2}
               exclude={[team2p1, team2p2]}
@@ -157,13 +157,13 @@ function NewMatchPage() {
           </div>
           <div className="flex gap-3">
             <SelectField
-              label="プレイヤー3"
+              label="相手1（任意）"
               value={team2p1}
               onChange={setTeam2p1}
               exclude={[team1p2, team2p2]}
             />
             <SelectField
-              label="プレイヤー4"
+              label="相手2（任意）"
               value={team2p2}
               onChange={setTeam2p2}
               exclude={[team1p2, team2p1]}
