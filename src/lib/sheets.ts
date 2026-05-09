@@ -82,8 +82,8 @@ export async function getMatches(): Promise<Match[]> {
     .map((row) => ({
       id: row[0],
       date: row[1],
-      team1: [row[2], row[3]] as [string, string],
-      team2: [row[4], row[5]] as [string, string],
+      team1: [row[2], row[3]].filter(Boolean) as string[],
+      team2: [row[4], row[5]].filter(Boolean) as string[],
       score1: Number(row[6]),
       score2: Number(row[7]),
       createdAt: row[8],
