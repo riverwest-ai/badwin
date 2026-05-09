@@ -165,6 +165,56 @@ export async function deleteMatch(id: string): Promise<void> {
   });
 }
 
+// --- Sessions ---
+
+export async function getSessionNames(): Promise<Record<string, string>> {
+  "use cache";
+  cacheLife("minutes");
+  cacheTag("sessions");
+
+  try {
+    const sheets = await getSheets();
+    const res = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: "sessions!A2:B",
+    });
+    const rows = res.data.values ?? [];
+    const map: Record<string, string> = {};
+    for (const row of rows) {
+      if (row[0] && row[1]) map[row[0]] = row[1];
+    }
+    return map;
+  } catch {
+    return {};
+  }
+}
+
+export async function setSessionName(date: string, name: string): Promise<void> {
+  const sheets = await getSheets();
+  const res = await sheets.spreadsheets.values.get({
+    spreadsheetId: SPREADSHEET_ID,
+    range: "sessions!A:B",
+  });
+  const rows = res.data.values ?? [];
+  const rowIndex = rows.findIndex((row) => row[0] === date);
+
+  if (rowIndex === -1) {
+    await sheets.spreadsheets.values.append({
+      spreadsheetId: SPREADSHEET_ID,
+      range: "sessions!A:B",
+      valueInputOption: "RAW",
+      requestBody: { values: [[date, name]] },
+    });
+  } else {
+    await sheets.spreadsheets.values.update({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `sessions!A${rowIndex + 1}:B${rowIndex + 1}`,
+      valueInputOption: "RAW",
+      requestBody: { values: [[date, name]] },
+    });
+  }
+}
+
 // --- LINE Users ---
 
 export async function getLineUser(lineUserId: string): Promise<{ memberName: string } | null> {

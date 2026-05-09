@@ -1,11 +1,12 @@
 
 import { Suspense } from "react";
-import { getMatches } from "@/lib/sheets";
+import { getMatches, getSessionNames } from "@/lib/sheets";
 import { Match } from "@/lib/types";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import Link from "next/link";
 import { ListSkeleton } from "@/components/Skeleton";
+import SessionNameEditor from "@/components/SessionNameEditor";
 
 
 const MY_NAME = "ぎんじ";
@@ -33,11 +34,13 @@ function calcPlayerStats(matches: Match[]) {
 
 async function SessionDetail({ date }: { date: string }) {
   let allMatches: Match[] = [];
+  let sessionNames: Record<string, string> = {};
   try {
-    allMatches = await getMatches();
+    [allMatches, sessionNames] = await Promise.all([getMatches(), getSessionNames()]);
   } catch {
     // 接続失敗時は空
   }
+  const sessionName = sessionNames[date] ?? "";
 
   const matches = allMatches
     .filter((m) => m.date === date)
@@ -47,7 +50,8 @@ async function SessionDetail({ date }: { date: string }) {
 
   return (
     <>
-      <div className="flex gap-3 mt-2 text-sm text-gray-500">
+      <SessionNameEditor date={date} initialName={sessionName} />
+      <div className="flex gap-3 text-sm text-gray-500">
         <span>{matches.length}試合</span>
         <span>·</span>
         <span>参加{playerStats.length}名</span>
