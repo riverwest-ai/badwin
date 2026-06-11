@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { revalidateTag } from "next/cache";
 import { addMatch, deleteMatch, getMatches, updateMatch } from "@/lib/sheets";
 
 export async function GET() {
@@ -25,7 +24,6 @@ export async function POST(req: Request) {
     }
 
     const match = await addMatch({ date, team1, team2, score1, score2 });
-    revalidateTag("matches", "max");
     return NextResponse.json(match, { status: 201 });
   } catch (e) {
     console.error(e);
@@ -46,7 +44,6 @@ export async function PUT(req: Request) {
     }
 
     await updateMatch({ id, date, team1, team2: team2 ?? [], score1, score2 });
-    revalidateTag("matches", "max");
     return NextResponse.json({ success: true });
   } catch (e) {
     console.error(e);
@@ -58,7 +55,6 @@ export async function DELETE(req: Request) {
   try {
     const { id } = await req.json();
     await deleteMatch(id);
-    revalidateTag("matches", "max");
     return NextResponse.json({ success: true });
   } catch (e) {
     console.error(e);

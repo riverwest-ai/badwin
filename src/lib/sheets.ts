@@ -1,5 +1,5 @@
 import { google } from "googleapis";
-import { cacheLife, cacheTag } from "next/cache";
+import { connection } from "next/server";
 import { Match, Member } from "./types";
 
 const SCOPES = ["https://www.googleapis.com/auth/spreadsheets"];
@@ -21,10 +21,7 @@ async function getSheets() {
 // --- Members ---
 
 export async function getMembers(): Promise<Member[]> {
-  "use cache";
-  cacheLife("minutes");
-  cacheTag("members");
-
+  await connection();
   const sheets = await getSheets();
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
@@ -67,10 +64,7 @@ export async function deleteMember(id: string): Promise<void> {
 // --- Matches ---
 
 export async function getMatches(): Promise<Match[]> {
-  "use cache";
-  cacheLife("minutes");
-  cacheTag("matches");
-
+  await connection();
   const sheets = await getSheets();
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
@@ -168,10 +162,7 @@ export async function deleteMatch(id: string): Promise<void> {
 // --- Sessions ---
 
 export async function getSessionNames(): Promise<Record<string, string>> {
-  "use cache";
-  cacheLife("minutes");
-  cacheTag("sessions");
-
+  await connection();
   try {
     const sheets = await getSheets();
     const res = await sheets.spreadsheets.values.get({
@@ -218,10 +209,7 @@ export async function setSessionName(date: string, name: string): Promise<void> 
 // --- LINE Users ---
 
 export async function getLineUser(lineUserId: string): Promise<{ memberName: string } | null> {
-  "use cache";
-  cacheLife("minutes");
-  cacheTag("line-users");
-
+  await connection();
   const sheets = await getSheets();
   const res = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
