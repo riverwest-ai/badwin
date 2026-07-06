@@ -10,9 +10,20 @@ export type MyMatch = {
   oppScore: number;
   margin: number;
   won: boolean;
+  format: 15 | 21; // 何点マッチか(勝者スコアから推定)
   hasOpponents: boolean;
   partner: string | null;
 };
+
+// デュース: 両者が(形式-1)点以上に達した試合(21点なら20-20、15点なら14-14以降)
+export function isDeuce(m: MyMatch): boolean {
+  return m.myScore >= m.format - 1 && m.oppScore >= m.format - 1;
+}
+
+// 完封級: 相手を大きく抑えた勝利(21点マッチ:10点以下 / 15点マッチ:7点以下)
+export function isShutoutWin(m: MyMatch): boolean {
+  return m.won && m.oppScore <= (m.format === 21 ? 10 : 7);
+}
 
 // 自分が含まれる試合だけを時系列(古い順)で返す
 export function toMyMatches(matches: Match[]): MyMatch[] {
@@ -32,6 +43,7 @@ export function toMyMatches(matches: Match[]): MyMatch[] {
         oppScore,
         margin: myScore - oppScore,
         won: myScore > oppScore,
+        format: (Math.max(myScore, oppScore) >= 21 ? 21 : 15) as 15 | 21,
         hasOpponents: oppTeam.length > 0,
         partner: myTeam.find((p) => p !== MY_NAME) ?? null,
       };
@@ -45,7 +57,8 @@ export function toMyMatches(matches: Match[]): MyMatch[] {
 
 // --- フォームスコア ---
 // 勝敗と点差で毎試合変動する1人レーティング。
-// 点差を±15にキャップして4倍(1試合あたり±60が上限)。
+// 点差を勝者スコアで割った割合×60なので、15点マッチと21点マッチを
+// 公平に扱える(完封で±60、15-13は+8、21-19は+6)。
 
 export const FORM_START = 1000;
 
@@ -60,8 +73,8 @@ export type FormScorePoint = {
 export function calcFormScore(myMatches: MyMatch[]): FormScorePoint[] {
   let score = FORM_START;
   return myMatches.map((m, i) => {
-    const capped = Math.max(-15, Math.min(15, m.margin));
-    const delta = capped * 4;
+    const winnerScore = Math.max(m.myScore, m.oppScore);
+    const delta = winnerScore > 0 ? Math.round((m.margin / winnerScore) * 60) : 0;
     score += delta;
     return { n: i + 1, date: m.date, score, delta, won: m.won };
   });
@@ -106,21 +119,41 @@ export function calcStreaks(myMatches: MyMatch[]) {
 
 // --- 点差分析 ---
 
+export type FormatAverages = {
+  format: 15 | 21;
+  count: number;
+  avgFor: number;
+  avgAgainst: number;
+  avgMargin: number;
+};
+
 export function calcMarginStats(myMatches: MyMatch[]) {
-  const total = myMatches.length;
-  const sumFor = myMatches.reduce((s, m) => s + m.myScore, 0);
-  const sumAgainst = myMatches.reduce((s, m) => s + m.oppScore, 0);
+  const round1 = (v: number) => Math.round(v * 10) / 10;
+
+  // 平均得点/失点は15点マッチと21点マッチを混ぜると歪むので形式別に出す
+  const byFormat: FormatAverages[] = ([15, 21] as const)
+    .map((format) => {
+      const ms = myMatches.filter((m) => m.format === format);
+      const sumFor = ms.reduce((s, m) => s + m.myScore, 0);
+      const sumAgainst = ms.reduce((s, m) => s + m.oppScore, 0);
+      return {
+        format,
+        count: ms.length,
+        avgFor: ms.length > 0 ? round1(sumFor / ms.length) : 0,
+        avgAgainst: ms.length > 0 ? round1(sumAgainst / ms.length) : 0,
+        avgMargin: ms.length > 0 ? round1((sumFor - sumAgainst) / ms.length) : 0,
+      };
+    })
+    .filter((f) => f.count > 0);
+
   const close = myMatches.filter((m) => Math.abs(m.margin) <= 2);
   const closeWins = close.filter((m) => m.won).length;
-  const deuce = myMatches.filter((m) => m.myScore >= 20 && m.oppScore >= 20);
+  const deuce = myMatches.filter(isDeuce);
   const deuceWins = deuce.filter((m) => m.won).length;
-  const shutoutWins = myMatches.filter((m) => m.won && m.oppScore <= 10).length;
-  const round1 = (v: number) => Math.round(v * 10) / 10;
+  const shutoutWins = myMatches.filter(isShutoutWin).length;
   return {
-    total,
-    avgFor: total > 0 ? round1(sumFor / total) : 0,
-    avgAgainst: total > 0 ? round1(sumAgainst / total) : 0,
-    avgMargin: total > 0 ? round1((sumFor - sumAgainst) / total) : 0,
+    total: myMatches.length,
+    byFormat,
     close: {
       count: close.length,
       wins: closeWins,
@@ -194,9 +227,9 @@ const COUNTERS: Counter[] = [
   { id: "wins-200", icon: "🏆", title: "200勝", desc: "通算200勝を達成する", target: 200, step: (m, p) => p + (m.won ? 1 : 0) },
   { id: "games-100", icon: "🏃", title: "100試合", desc: "通算100試合に出場する", target: 100, step: (_, p) => p + 1 },
   { id: "games-300", icon: "⛰️", title: "300試合", desc: "通算300試合に出場する", target: 300, step: (_, p) => p + 1 },
-  { id: "shutout", icon: "✋", title: "完封級", desc: "相手を10点以下に抑えて勝つ", target: 1, step: (m, p) => p + (m.won && m.oppScore <= 10 ? 1 : 0) },
+  { id: "shutout", icon: "✋", title: "完封級", desc: "相手を大きく抑えて勝つ(21点:10点以下/15点:7点以下)", target: 1, step: (m, p) => p + (isShutoutWin(m) ? 1 : 0) },
   { id: "close-10", icon: "🎯", title: "接戦ハンター", desc: "2点差以内の勝利を10回", target: 10, step: (m, p) => p + (m.won && m.margin <= 2 ? 1 : 0) },
-  { id: "deuce-5", icon: "🧊", title: "デュース職人", desc: "デュース(20-20以降)の勝利を5回", target: 5, step: (m, p) => p + (m.won && m.myScore >= 20 && m.oppScore >= 20 ? 1 : 0) },
+  { id: "deuce-5", icon: "🧊", title: "デュース職人", desc: "デュースにもつれた試合の勝利を5回", target: 5, step: (m, p) => p + (m.won && isDeuce(m) ? 1 : 0) },
 ];
 
 const STREAK_TARGETS = [

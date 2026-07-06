@@ -77,7 +77,7 @@ async function StatsContent() {
           </div>
         </div>
         <FormScoreChart points={form} />
-        <p className="text-xs text-gray-600 mt-1">勝敗と点差で毎試合変動します(点差×4、±60が上限)</p>
+        <p className="text-xs text-gray-600 mt-1">勝敗と点差の割合で毎試合変動します(完封で±60。15点/21点マッチどちらも公平)</p>
       </div>
 
       {/* フォームタイル */}
@@ -98,14 +98,16 @@ async function StatsContent() {
       {/* 点差分析 */}
       <div>
         <h2 className="text-sm font-semibold text-gray-400 uppercase tracking-wider mb-3">点差分析</h2>
-        <div className="grid grid-cols-3 gap-2 mb-2">
-          <Tile label="平均得点" value={margin.avgFor.toFixed(1)} />
-          <Tile label="平均失点" value={margin.avgAgainst.toFixed(1)} />
-          <Tile
-            label="平均点差"
-            value={`${margin.avgMargin >= 0 ? "+" : ""}${margin.avgMargin.toFixed(1)}`}
-          />
-        </div>
+        {margin.byFormat.map((f) => (
+          <div key={f.format} className="mb-2">
+            <div className="text-xs text-gray-600 mb-1">{f.format}点マッチ({f.count}試合)</div>
+            <div className="grid grid-cols-3 gap-2">
+              <Tile label="平均得点" value={f.avgFor.toFixed(1)} />
+              <Tile label="平均失点" value={f.avgAgainst.toFixed(1)} />
+              <Tile label="平均点差" value={`${f.avgMargin >= 0 ? "+" : ""}${f.avgMargin.toFixed(1)}`} />
+            </div>
+          </div>
+        ))}
         <div className="grid grid-cols-3 gap-2">
           <Tile
             label="接戦勝率"
@@ -117,7 +119,7 @@ async function StatsContent() {
             value={margin.deuce.count > 0 ? `${margin.deuce.winRate}%` : "—"}
             sub={margin.deuce.count > 0 ? `${margin.deuce.wins}勝${margin.deuce.count - margin.deuce.wins}敗` : "まだなし"}
           />
-          <Tile label="完封級の勝利" value={`${margin.shutoutWins}回`} sub="相手10点以下" />
+          <Tile label="完封級の勝利" value={`${margin.shutoutWins}回`} sub="相手を大差で圧倒" />
         </div>
       </div>
 
