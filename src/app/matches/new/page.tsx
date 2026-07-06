@@ -3,7 +3,7 @@
 import { Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Member } from "@/lib/types";
+import { Match, Member } from "@/lib/types";
 import { format } from "date-fns";
 
 const MY_NAME = "ぎんじ";
@@ -29,6 +29,32 @@ function NewMatchPage() {
   const [team2p2, setTeam2p2] = useState("");
   const [score1, setScore1] = useState("");
   const [score2, setScore2] = useState("");
+  const [quickFilling, setQuickFilling] = useState(false);
+
+  async function fillFromLastMatch() {
+    setQuickFilling(true);
+    setError("");
+    try {
+      const res = await fetch("/api/matches");
+      if (!res.ok) throw new Error();
+      const all: Match[] = await res.json();
+      if (all.length === 0) {
+        setError("まだ試合の記録がありません");
+        return;
+      }
+      const last = [...all].sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""))[0];
+      const inTeam1 = last.team1.includes(MY_NAME);
+      const myTeam = inTeam1 ? last.team1 : last.team2;
+      const oppTeam = inTeam1 ? last.team2 : last.team1;
+      setTeam1p2(myTeam.find((p) => p !== MY_NAME) ?? "");
+      setTeam2p1(oppTeam[0] ?? "");
+      setTeam2p2(oppTeam[1] ?? "");
+    } catch {
+      setError("前回の試合を取得できませんでした");
+    } finally {
+      setQuickFilling(false);
+    }
+  }
 
   useEffect(() => {
     fetch("/api/members")
@@ -130,6 +156,16 @@ function NewMatchPage() {
             className="w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-green-500"
           />
         </div>
+
+        {/* クイック入力 */}
+        <button
+          type="button"
+          onClick={fillFromLastMatch}
+          disabled={quickFilling}
+          className="w-full bg-gray-800 hover:bg-gray-700 disabled:opacity-50 border border-gray-700 text-gray-300 text-sm font-semibold py-2.5 rounded-lg transition-colors"
+        >
+          {quickFilling ? "取得中..." : "↩︎ 前回と同じメンバーで入力"}
+        </button>
 
         {/* チーム1 */}
         <div className="bg-gray-900 rounded-xl p-4 border border-green-800/40">

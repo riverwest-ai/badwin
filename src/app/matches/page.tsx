@@ -33,7 +33,16 @@ function MatchRow({ match }: { match: Match }) {
           <div className="flex items-center gap-3">
             <div className="flex-1 space-y-1">
               <div className="text-sm font-semibold text-white">{myTeam.join(" & ")}</div>
-              <div className="text-xs text-gray-500">vs {oppTeam.join(" & ")}</div>
+              {oppTeam.length > 0 ? (
+                <div className="text-xs text-gray-500">vs {oppTeam.join(" & ")}</div>
+              ) : (
+                <Link
+                  href={`/matches/${match.id}/edit`}
+                  className="inline-block text-xs text-amber-400/90 bg-amber-500/10 border border-amber-500/20 rounded-full px-2 py-0.5 hover:bg-amber-500/20 transition-colors"
+                >
+                  👤 相手を追加
+                </Link>
+              )}
             </div>
             <div className="text-right">
               <span className={`text-xl font-bold ${won ? "text-green-400" : "text-red-400"}`}>{myScore}</span>

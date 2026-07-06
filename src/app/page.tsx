@@ -6,8 +6,26 @@ import { Match } from "@/lib/types";
 import { format } from "date-fns";
 import { ja } from "date-fns/locale";
 import { StatsSkeleton, ListSkeleton } from "@/components/Skeleton";
+import { toMyMatches, calcFormScore, calcRecentForm, calcStreaks, FORM_START } from "@/lib/stats";
 
 const MY_NAME = "ぎんじ";
+
+function Sparkline({ values }: { values: number[] }) {
+  if (values.length < 2) return null;
+  const w = 120;
+  const h = 36;
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+  const span = Math.max(max - min, 1);
+  const pts = values
+    .map((v, i) => `${((i / (values.length - 1)) * w).toFixed(1)},${(h - 3 - ((v - min) / span) * (h - 6)).toFixed(1)}`)
+    .join(" ");
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} className="w-28 h-9" aria-hidden>
+      <polyline points={pts} fill="none" stroke="#4ade80" strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
+  );
+}
 
 function calcStats(matches: Match[]) {
   const myMatches = matches.filter(
@@ -28,8 +46,9 @@ function calcPartnerStats(matches: Match[]) {
     const inTeam2 = m.team2.includes(MY_NAME);
     if (!inTeam1 && !inTeam2) continue;
     const partner = inTeam1
-      ? m.team1.find((p) => p !== MY_NAME)!
-      : m.team2.find((p) => p !== MY_NAME)!;
+      ? m.team1.find((p) => p !== MY_NAME)
+      : m.team2.find((p) => p !== MY_NAME);
+    if (!partner) continue;
     const won = inTeam1 ? m.score1 > m.score2 : m.score2 > m.score1;
     if (!partnerMap[partner]) partnerMap[partner] = { wins: 0, total: 0 };
     partnerMap[partner].total++;
@@ -47,6 +66,7 @@ function calcOpponentStats(matches: Match[]) {
     const inTeam2 = m.team2.includes(MY_NAME);
     if (!inTeam1 && !inTeam2) continue;
     const opponents = inTeam1 ? m.team2 : m.team1;
+    if (opponents.length === 0) continue;
     const key = opponents.join(" & ");
     const won = inTeam1 ? m.score1 > m.score2 : m.score2 > m.score1;
     if (!oppMap[key]) oppMap[key] = { wins: 0, total: 0 };
@@ -104,32 +124,52 @@ async function DashboardContent() {
   const opponentStats = calcOpponentStats(matches);
   const recent = sorted.slice(0, 5);
 
+  const my = toMyMatches(matches);
+  const form = calcFormScore(my);
+  const current = form.at(-1);
+  const recent10 = calcRecentForm(my, 10);
+  const streaks = calcStreaks(my);
+
   return (
     <>
-      {/* 勝率ビッグカード */}
-      <div className="bg-gradient-to-br from-green-900/40 to-gray-900 rounded-2xl p-6 border border-green-800/30">
-        <p className="text-gray-400 text-sm mb-1">通算勝率</p>
-        <div className="flex items-end gap-3">
-          <span className="text-6xl font-black text-green-400">{stats.winRate}%</span>
-          <span className="text-gray-500 mb-2 text-sm">{stats.total}試合</span>
+      {/* フォームスコア ビッグカード */}
+      <Link
+        href="/stats"
+        className="block bg-gradient-to-br from-green-900/40 to-gray-900 rounded-2xl p-6 border border-green-800/30 hover:border-green-700/50 transition-colors"
+      >
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-gray-400 text-sm mb-1">フォームスコア</p>
+            <div className="flex items-end gap-3">
+              <span className="text-6xl font-black text-green-400">{current?.score ?? FORM_START}</span>
+              {current && (
+                <span className={`mb-2 text-sm font-bold ${current.won ? "text-green-400" : "text-red-400"}`}>
+                  {current.delta >= 0 ? "+" : ""}{current.delta} {current.won ? "WIN" : "LOSE"}
+                </span>
+              )}
+            </div>
+          </div>
+          <Sparkline values={form.slice(-20).map((p) => p.score)} />
         </div>
-        <div className="flex gap-4 mt-4">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-green-400">{stats.wins}</div>
-            <div className="text-xs text-gray-500">勝ち</div>
-          </div>
-          <div className="text-gray-700">|</div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-red-400">{stats.losses}</div>
-            <div className="text-xs text-gray-500">負け</div>
-          </div>
+        <div className="flex items-center gap-2 mt-4 flex-wrap">
+          <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-gray-800 text-gray-300">
+            直近10試合 {recent10.winRate}%
+          </span>
+          {my.length > 0 && (
+            <span
+              className={`text-xs font-bold px-2.5 py-1 rounded-full ${
+                streaks.currentType === "win" ? "bg-green-500/20 text-green-400" : "bg-red-500/20 text-red-400"
+              }`}
+            >
+              {streaks.currentType === "win" ? "🔥 " : ""}{streaks.current}{streaks.currentType === "win" ? "連勝中" : "連敗中"}
+            </span>
+          )}
+          <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-gray-800 text-gray-300">
+            通算 {stats.winRate}% ({stats.wins}勝{stats.losses}敗)
+          </span>
+          <span className="ml-auto text-xs text-green-400">詳しい分析 →</span>
         </div>
-        {stats.total > 0 && (
-          <div className="mt-4 h-2 bg-gray-800 rounded-full overflow-hidden">
-            <div className="h-full bg-green-500 rounded-full transition-all" style={{ width: `${stats.winRate}%` }} />
-          </div>
-        )}
-      </div>
+      </Link>
 
       {/* パートナー別 */}
       {partnerStats.length > 0 && (

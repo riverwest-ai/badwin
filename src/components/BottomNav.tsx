@@ -5,11 +5,20 @@ import { usePathname } from "next/navigation";
 
 const navItems = [
   { href: "/", label: "ホーム", icon: HomeIcon },
-  { href: "/ranking", label: "ランキング", icon: TrophyIcon },
+  { href: "/stats", label: "分析", icon: ChartIcon },
   { href: "/matches/new", label: "記録", icon: PlusIcon, primary: true },
+  { href: "/ranking", label: "ランキング", icon: TrophyIcon },
   { href: "/sessions", label: "セッション", icon: CalendarIcon },
   { href: "/profile", label: "プロフィール", icon: UserIcon },
 ];
+
+function ChartIcon({ active }: { active: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" fill={active ? "currentColor" : "none"} stroke="currentColor" strokeWidth={active ? 0 : 1.8} className="w-6 h-6">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M4 19h16M6 16v-5m4 5V8m4 8v-3m4 3V5" />
+    </svg>
+  );
+}
 
 function HomeIcon({ active }: { active: boolean }) {
   return (
@@ -80,7 +89,7 @@ export default function BottomNav() {
             <Link
               key={item.href}
               href={item.href}
-              className={`flex flex-col items-center gap-0.5 py-3 px-3 transition-colors ${
+              className={`flex flex-col items-center gap-0.5 py-3 px-1.5 transition-colors ${
                 active ? "text-green-400" : "text-gray-500"
               }`}
             >
